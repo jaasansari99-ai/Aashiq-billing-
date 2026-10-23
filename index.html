@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEW AASHIQ BILLING - Trade & Contract Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="manifest" href="data:application/manifest+json;base64,ewogICJuYW1lIjogIk5FVyBBQVNISVEgQklMTElORyIsCiAgInNob3J0X25hbWUiOiAiQUFTSElRIEJJTExJTkciLAogICJzdGFydF91cmwiOiAiLi8iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMwZjE3MmEiLAogICJ0aGVtZV9jb2xvciI6ICIjNGY0NmU1Igp9">
+    <style>
+        body { background-color: #0b0f19; color: #f3f4f6; font-family: system-ui, -apple-system, sans-serif; }
+        .card-bg { background-color: #111827; border: 1px solid #1f2937; }
+        .input-bg { background-color: #1f2937; border: 1px solid #374151; color: #ffffff; }
+        .input-bg:focus { border-color: #6366f1; outline: none; }
+    </style>
+</head>
+<body class="p-2 md:p-6 max-w-md mx-auto min-h-screen pb-20">
+
+    <!-- Header -->
+    <header class="flex justify-between items-center mb-4 p-3 card-bg rounded-xl shadow-lg">
+        <div>
+            <h1 class="text-lg font-bold tracking-wide text-indigo-400">NEW AASHIQ BILLING</h1>
+            <p class="text-xs text-gray-400">Trade & Contract Engine</p>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="toggleTheme()" class="p-2 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700">⚙️</button>
+        </div>
+    </header>
+
+    <!-- Daily Khata Summary -->
+    <section class="card-bg p-4 rounded-xl mb-4 shadow-md">
+        <div class="flex justify-between items-center mb-3">
+            <span class="text-xs font-semibold uppercase tracking-wider text-gray-400">Daily Khata Summary</span>
+            <input type="date" id="filterDate" onchange="updateSummary()" class="input-bg text-xs p-1 rounded">
+        </div>
+        <div class="grid grid-cols-2 gap-3 text-center">
+            <div class="bg-gray-800/60 p-3 rounded-lg">
+                <p class="text-[10px] text-gray-400 uppercase">Today's Total Sales</p>
+                <p class="text-lg font-bold text-emerald-400" id="todaySales">₹0.00</p>
+            </div>
+            <div class="bg-gray-800/60 p-3 rounded-lg">
+                <p class="text-[10px] text-gray-400 uppercase">Cash Collection</p>
+                <p class="text-lg font-bold text-teal-400" id="cashCollection">₹0.00</p>
+            </div>
+            <div class="bg-gray-800/60 p-3 rounded-lg">
+                <p class="text-[10px] text-gray-400 uppercase">Net Baki Balance</p>
+                <p class="text-lg font-bold text-amber-400" id="netBaki">₹0.00</p>
+            </div>
+            <div class="bg-gray-800/60 p-3 rounded-lg">
+                <p class="text-[10px] text-gray-400 uppercase">Active Contracts</p>
+                <p class="text-lg font-bold text-indigo-400" id="activeContracts">0 (₹0)</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <div class="flex gap-2 mb-4">
+        <button id="tabQuick" onclick="switchTab('quick')" class="flex-1 py-2 text-xs font-bold rounded-lg bg-indigo-600 text-white">Quick Billing</button>
+        <button id="tabContract" onclick="switchTab('contract')" class="flex-1 py-2 text-xs font-bold rounded-lg bg-gray-800 text-gray-400">Contracts / Agreement</button>
+    </div>
+
+    <!-- New Entry Form -->
+    <section id="formSection" class="card-bg p-4 rounded-xl shadow-md mb-4">
+        <h2 class="text-sm font-bold text-gray-300 mb-3">NEW ENTRY FORM</h2>
+        
+        <form id="billingForm" class="space-y-3" onsubmit="event.preventDefault();">
+            <div>
+                <label class="text-[11px] text-gray-400">Date</label>
+                <input type="date" id="billDate" class="w-full input-bg p-2 text-sm rounded-lg mt-1">
+            </div>
+
+            <div>
+                <label class="text-[11px] text-gray-400">Customer Name</label>
+                <input type="text" id="customerName" placeholder="Customer name" class="w-full input-bg p-2 text-sm rounded-lg mt-1">
+            </div>
+
+            <div>
+                <label class="text-[11px] text-gray-400">Mobile Number</label>
+                <input type="tel" id="customerPhone" placeholder="10-digit phone" class="w-full input-bg p-2 text-sm rounded-lg mt-1">
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="text-[11px] text-gray-400">Weight (Wazan - KG)</label>
+                    <input type="number" id="weight" step="0.01" placeholder="0.00" oninput="calculateTotal()" class="w-full input-bg p-2 text-sm rounded-lg mt-1">
+                </div>
+                <div>
+                    <label class="text-[11px] text-gray-400">Rate (Per KG / Unit)</label>
+                    <input type="number" id="rate" step="0.01" placeholder="0.00" oninput="calculateTotal()" class="w-full input-bg p-2 text-sm rounded-lg mt-1">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="text-[11px] text-gray-400">Kharcha (Expense -)</label>
+                    <input type="number" id="kharcha" placeholder="0" oninput="calculateTotal()" class="w-full input-bg p-2 text-sm rounded-lg mt-1">
+                </div>
+                <div>
+                    <label class="text-[11px] text-gray-400">Baki (Balance +)</label>
+                    <input type="number" id="baki" placeholder="0" oninput="calculateTotal()" class="w-full input-bg p-2 text-sm rounded-lg mt-1">
+                </div>
+            </div>
+
+            <div>
+                <label class="text-[11px] text-gray-400">Advance Amount (-)</label>
+                <input type="number" id="advance" placeholder="0" oninput="calculateTotal()" class="w-full input-bg p-2 text-sm rounded-lg mt-1">
+            </div>
+
+            <div class="bg-black/40 p-3 rounded-lg flex justify-between items-center my-3 border border-gray-800">
+                <span class="text-xs uppercase font-bold text-gray-400">Total Amount</span>
+                <span class="text-xl font-extrabold text-amber-400" id="displayTotal">₹0.00</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+                <button type="button" onclick="resetForm()" class="w-full py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs font-bold text-gray-300">Clear Form</button>
+                <button type="button" onclick="saveBill()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-bold text-white">Save Bill</button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+                <button type="button" onclick="downloadPDF()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-xs font-bold text-white">Download PDF</button>
+                <button type="button" onclick="shareWhatsApp()" class="w-full py-2 bg-green-600 hover:bg-green-500 rounded-lg text-xs font-bold text-white">WhatsApp Share</button>
+            </div>
+        </form>
+    </section>
+
+    <!-- Saved History -->
+    <section class="card-bg p-4 rounded-xl shadow-md">
+        <h2 class="text-sm font-bold text-gray-300 mb-3 flex justify-between items-center">
+            <span>SAVED BILLS HISTORY</span>
+            <span id="savedCount" class="text-xs bg-indigo-900/60 text-indigo-300 px-2 py-0.5 rounded-full">0 saved</span>
+        </h2>
+        <div id="billsList" class="space-y-2 text-xs text-gray-400">
+            <p class="text-center py-4 text-gray-500">Koi saved bill nahi hai.</p>
+        </div>
+    </section>
+
+    <script>
+        document.getElementById('billDate').valueAsDate = new Date();
+        document.getElementById('filterDate').valueAsDate = new Date();
+
+        function getBills() {
+            return JSON.parse(localStorage.getItem('aashiq_bills') || '[]');
+        }
+
+        function calculateTotal() {
+            let w = parseFloat(document.getElementById('weight').value) || 0;
+            let r = parseFloat(document.getElementById('rate').value) || 0;
+            let k = parseFloat(document.getElementById('kharcha').value) || 0;
+            let b = parseFloat(document.getElementById('baki').value) || 0;
+            let a = parseFloat(document.getElementById('advance').value) || 0;
+
+            let total = (w * r) - k + b - a;
+            document.getElementById('displayTotal').innerText = '₹' + total.toFixed(2);
+            return total;
+        }
+
+        function saveBill() {
+            let name = document.getElementById('customerName').value || 'Customer';
+            let phone = document.getElementById('customerPhone').value || '';
+            let date = document.getElementById('billDate').value;
+            let total = calculateTotal();
+
+            let bill = { id: Date.now(), name, phone, date, total };
+            let bills = getBills();
+            bills.push(bill);
+            localStorage.setItem('aashiq_bills', JSON.stringify(bills));
+            renderHistory();
+            updateSummary();
+            alert('Bill successfully save ho gaya!');
+        }
+
+        function renderHistory() {
+            let bills = getBills();
+            let container = document.getElementById('billsList');
+            document.getElementById('savedCount').innerText = bills.length + ' saved';
+
+            if (bills.length === 0) {
+                container.innerHTML = '<p class="text-center py-4 text-gray-500">Koi saved bill nahi hai.</p>';
+                return;
+            }
+
+            container.innerHTML = bills.map(b => `
+                <div class="bg-gray-800/40 p-3 rounded-lg border border-gray-700/50 flex justify-between items-center">
+                    <div>
+                        <p class="font-bold text-gray-200">${b.name}</p>
+                        <p class="text-[10px] text-gray-400">${b.date} | ${b.phone}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold text-indigo-400">₹${b.total.toFixed(2)}</p>
+                        <button onclick="deleteBill(${b.id})" class="text-[10px] text-red-400 hover:underline">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function deleteBill(id) {
+            if(confirm("Delete this bill?")) {
+                let bills = getBills().filter(b => b.id !== id);
+                localStorage.setItem('aashiq_bills', JSON.stringify(bills));
+                renderHistory();
+                updateSummary();
+            }
+        }
+
+        function updateSummary() {
+            let bills = getBills();
+            let sum = bills.reduce((acc, b) => acc + b.total, 0);
+            document.getElementById('todaySales').innerText = '₹' + sum.toFixed(2);
+            document.getElementById('cashCollection').innerText = '₹' + sum.toFixed(2);
+        }
+
+        function resetForm() {
+            document.getElementById('billingForm').reset();
+            document.getElementById('billDate').valueAsDate = new Date();
+            calculateTotal();
+        }
+
+        function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            let name = document.getElementById('customerName').value || 'Customer';
+            let total = calculateTotal();
+
+            doc.text("NEW AASHIQ BILLING", 105, 20, { align: "center" });
+            doc.text("Customer: " + name, 14, 40);
+            doc.text("Total Amount: Rs. " + total.toFixed(2), 14, 50);
+            doc.save("Bill_" + name + ".pdf");
+        }
+
+        function shareWhatsApp() {
+            let name = document.getElementById('customerName').value || 'Customer';
+            let phone = document.getElementById('customerPhone').value || '';
+            let total = calculateTotal();
+            let text = `NEW AASHIQ BILLING\nCustomer: ${name}\nTotal: ₹${total.toFixed(2)}`;
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+        }
+
+        renderHistory();
+        updateSummary();
+    </script>
+</body>
+</html>
